@@ -1,9 +1,9 @@
 import os
 import torch
 import torchaudio
-import matplotlib.pyplot as plt
 import utils
 import cv2 as cv
+import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
@@ -19,80 +19,63 @@ src_path = './src/'
 log_errPath = './logs/dataPreErr.log'
 log_infoPath = './logs/dataPreInfo.log'
 log_warnPath = './logs/dataPreWarn.log'
-dataClasses = ['dev/', 'test/', 'train/']
+dataClasses = ['train', 'dev', 'test']
 source_path = '/Volumes/External/Speaker-Rec/Dataset/'
 
 
 def proFilePath(sourcePath, docPath):
 	for root, dirs, datasets in os.walk(sourcePath):
-		if root.count('/') >= 6:
-			datasets.sort()
-			wavClass = root[root[:-6].rfind('/') + 1:-6] + '/'
-			wavDirPath = wavClass + root[-5:]
-			if not os.path.exists(docPath + wavClass):
-				os.mkdir(docPath + wavClass)
-			f = open(docPath + wavDirPath, 'w')
-			for dataset in tqdm(datasets, desc=wavDirPath):
-				if 'wav' in dataset:
-					f.write(dataset + '\n')
-			f.close()
+		classes = os.path.basename(root)
+		if classes in dataClasses:
+			doc_wav = os.path.join(doc_path, classes)
+			if not os.path.exists(doc_wav):
+				os.mkdir(doc_wav)
+			for dir_item in dirs:
+				sub_class = os.path.join(source_path, classes, dir_item)
+				for person, _, wav_samples in os.walk(sub_class):
+					f = open(os.path.join(doc_wav, os.path.basename(person)), 'w')
+					for wav_sample in tqdm(wav_samples, desc=person):
+						if wav_sample != '.DS_Store':
+							f.write(os.path.join(person, wav_sample) + '\n')
+					f.close()
 
-
-def wavToSpec(wavPath, wavName, wavClass, specDir, plot):
-	fileName = wavPath + wavName[:-1]
-	waveform, sample_rate = torchaudio.load(filepath=fileName, frame_offset=10000, num_frames=16000)
+def wavToSpec(wavname, wavdir, wav_class):
+	waveform, sample_rate = torchaudio.load(filepath=wavname, frame_offset=10000, num_frames=16000)
 	if len(waveform[0]) == 0:
 		loggerErr = utils.getLogger(log_errPath)
-		loggerErr.error(fileName)
+		loggerErr.error(wavname)
 		return
-	specPath = img_path + wavClass + specDir
+	specPath = os.path.join(img_path, wavdir)
 	if not os.path.exists(specPath):
 		os.mkdir(specPath)
 
 	specgram = torchaudio.transforms.Spectrogram()(waveform)
+	if specgram.size(2) != 81:
+		loggerWarn = utils.getLogger(log_warnPath)
+		loggerWarn.warning(wavname + ', ' + "Shape of spectromgram:{}".format(specgram.size()))
+		return
 	loggerInfo = utils.getLogger(log_infoPath)
-	loggerInfo.info(wavClass + specDir + wavName[:-1] + ', ' + "Shape of spectromgram:{}".format(specgram.size()))
-	plot.imshow(specgram.log2()[0, :, :].numpy(), cmap='gray')
-	plot.axis('off')
-	plot.savefig(specPath + wavName[:-5] + '.png', bbox_inches='tight', pad_inches=0.0)
-	plot.clf()
+	loggerInfo.info(wavname + ', ' + "Shape of spectromgram:{}".format(specgram.size()))
+	image_arr = specgram.log2()[0, :, :].numpy()
+	filepath = os.path.join(img_path, wavdir, os.path.basename(wavname)[:-3] + 'png')
+	plt.imsave(fname=filepath, arr=image_arr, format='png', cmap='gray')
 
 
 def SpecGenerator(dataDocDirs):
-	plt.figure()
 
 	for docDir in dataDocDirs:
-		dataDocPath = doc_path + docDir
-		dataWavPath = source_path + docDir
-		for root, dirs, datasets in os.walk(dataDocPath):
-			wavDir = ''
-			begin = root.find('/') + 6
-			end = root.rfind('/')
-			wavDir = root[begin:end] + '/'
+		dataDocPath = os.path.join(doc_path, docDir)
+		for root, _, datasets in os.walk(dataDocPath):
+			class_name = os.path.basename(root)
 			datasets.sort()
 			for dataset in datasets:
-				if dataset[0] == '.':
-					continue
-				dataDocFile = open(root + dataset, 'r')
-				wavPath = source_path + wavDir + dataset + '/'
-				fileNames = dataDocFile.readlines()
-				for fileName in tqdm(fileNames, desc=wavDir + dataset):
-					wavToSpec(source_path + wavDir + dataset + '/', fileName, wavDir, dataset + '/', plot=plt)
-				dataDocFile.close()
-	plt.close()
-
-def RGBToGray():
-	for root, dirs, names in os.walk(img_path):
-		className = os.path.join(data_path + root[-5:])
-		if not os.path.exists(className) and className[-5] == 'S':
-			os.mkdir(className)
-			for name in tqdm(names, desc=className):
-				fileName = os.path.join(root, name)
-				image = cv.imread(fileName, cv.IMREAD_GRAYSCALE)
-				cv.imwrite(os.path.join(className, os.path.basename(name)), image)
+				f = open(os.path.join(root, dataset), 'r')
+				wavpaths = f.readlines()
+				f.close()
+				for wavfile in tqdm(wavpaths, desc=dataset):
+					wavToSpec(wavfile[:-1], dataset, class_name)
 
 if __name__ == '__main__':
 	# proFilePath(source_path, doc_path)
 	# SpecGenerator(dataDocDirs=dataClasses)
-	# RGBToGray()
 	print('OK')
