@@ -1,3 +1,6 @@
 image
-data
 docs
+model
+tmp
+.DS_Store
+__pycache__

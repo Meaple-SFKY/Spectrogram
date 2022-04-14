@@ -7,18 +7,15 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
-# print(torch.__version__)
-# print(torchaudio.__version__)
-
-audio_path = './audio/'
-data_path = './data/'
-doc_path = './docs/'
-img_path = './image/'
-mdl_path = './model/'
-src_path = './src/'
-log_errPath = './logs/dataPreErr.log'
-log_infoPath = './logs/dataPreInfo.log'
-log_warnPath = './logs/dataPreWarn.log'
+audio_path = '../audio/'
+data_path = '../data/'
+doc_path = '../docs/'
+img_path = '../image/'
+mdl_path = '../model/'
+src_path = '../src/'
+log_errPath = '../logs/dataPreErr.log'
+log_infoPath = '../logs/dataPreInfo.log'
+log_warnPath = '../logs/dataPreWarn.log'
 dataClasses = ['train', 'dev', 'test']
 source_path = '/Volumes/External/Speaker-Rec/Dataset/'
 
@@ -38,6 +35,7 @@ def proFilePath(sourcePath, docPath):
 						if wav_sample != '.DS_Store':
 							f.write(os.path.join(person, wav_sample) + '\n')
 					f.close()
+
 
 def wavToSpec(wavname, wavdir, wav_class):
 	waveform, sample_rate = torchaudio.load(filepath=wavname, frame_offset=10000, num_frames=16000)
@@ -62,7 +60,6 @@ def wavToSpec(wavname, wavdir, wav_class):
 
 
 def SpecGenerator(dataDocDirs):
-
 	for docDir in dataDocDirs:
 		dataDocPath = os.path.join(doc_path, docDir)
 		for root, _, datasets in os.walk(dataDocPath):
@@ -75,7 +72,8 @@ def SpecGenerator(dataDocDirs):
 				for wavfile in tqdm(wavpaths, desc=dataset):
 					wavToSpec(wavfile[:-1], dataset, class_name)
 
-if __name__ == '__main__':
+
+def test():
 	# proFilePath(source_path, doc_path)
 	# SpecGenerator(dataDocDirs=dataClasses)
 	print('OK')
