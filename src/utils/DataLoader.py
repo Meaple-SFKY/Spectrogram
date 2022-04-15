@@ -26,7 +26,8 @@ def img_to_tensor(classCount, split_ratio, random_seed):
 		for root, _, fileNames in os.walk(class_path):
 			for fileName in fileNames:
 				if fileName != '.DS_Store':
-					dataItem = cv.imread(os.path.join(root, fileName), cv.IMREAD_GRAYSCALE)
+					pic = cv.imread(os.path.join(root, fileName), cv.IMREAD_GRAYSCALE)
+					dataItem = cv.resize(pic, (201, 201), interpolation=cv.INTER_CUBIC)
 					transf = transforms.ToTensor()
 					imageTensor = transf(dataItem)
 					# if imageTensor.size()[2] != 81:
@@ -34,7 +35,7 @@ def img_to_tensor(classCount, split_ratio, random_seed):
 					# 	continue
 					x.append(imageTensor)
 					y.append(index)
-
+	
 	y = torch.from_numpy((np.array(y))).long()
 
 	x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=split_ratio, random_state=random_seed)

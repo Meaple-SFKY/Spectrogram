@@ -99,6 +99,7 @@ def plot_loss_acc(acc_list, loss_list):
 	a1.set_xlabel('Epoch')
 	a1.legend()
 	a2.legend()
+	plt.savefig(fname="../data/Acc-Loss.pdf", format="pdf", bbox_inches='tight')
 	plt.show()
 
 

@@ -50,24 +50,21 @@ class OpeModel():
 			acc = self.test()
 			print('Loss, Acc - %d: %.8f, %.2f %%' % (index, loss, acc))
 
-	def eval_acc(self, epoch=5):
-		sum = 0.0
-		for i in range(epoch):
-			self.model.eval()
-			correct, total = 0, 0
-			for data in self.test_loader:
-				inputs, target = data
-				outputs = self.model(inputs)
-				_, predicted = torch.max(outputs.data, dim=1)
-				total += len(target)
-				correct += (predicted == target).sum().item()
-			sum += (100 * correct) / total
-		sum /= epoch
-		print('model acc: %.2f' % (sum))
-		return sum
+	def eval_acc(self):
+		self.model.eval()
+		correct, total = 0, 0
+		for data in self.test_loader:
+			inputs, target = data
+			outputs = self.model(inputs)
+			_, predicted = torch.max(outputs.data, dim=1)
+			total += len(target)
+			correct += (predicted == target).sum().item()
+		acc = (100 * correct) / total
+		print('model acc: %.2f' % (acc))
+		return acc
 
-	def save_state(self, mode, end, cnt):
-		acc = self.eval_acc(3)
+	def save_state(self, mode, end, cnt=5):
+		acc = self.eval_acc()
 		torch.save(self.model, '../model/%s,%.2f,%d,%d.pt' % (mode, acc, end, cnt))
 		np.save('../tmp/%s,acc,%d,%d' % (mode, end, cnt), self.acc_list)
 		np.save('../tmp/%s,loss,%d,%d' % (mode, end, cnt), self.loss_list)
