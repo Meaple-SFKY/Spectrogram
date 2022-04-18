@@ -15,7 +15,7 @@ def img_to_tensor(classCount, split_ratio, random_seed):
 	y = []
 	classes = []
 	except_image = []
-	image_path = "../image"
+	image_path = "../image/"
 	for root, dirs, classNames in os.walk(image_path):
 		dirs.sort()
 		for dir_ in dirs[0:classCount]:

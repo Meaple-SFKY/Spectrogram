@@ -62,7 +62,8 @@ def confusion_matrix(preds, labels, conf_matrix):
 
 
 def plot_cfm(model, test_loader, classes):
-	conf_matrix = torch.zeros(5, 5)
+	length = len(classes)
+	conf_matrix = torch.zeros(length, length)
 	acc_val = 0
 	model.eval()
 	total = 0

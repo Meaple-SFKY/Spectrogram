@@ -52,7 +52,7 @@ class BinSpecCNN(nn.Module):
 	def __init__(self, classCount):
 		super(BinSpecCNN, self).__init__()
 		self.BinCnn = nn.Sequential(
-			BinConv2d(1, 8, 9, stride=1),
+			BinConv2d(1, 8, 11, stride=1),
 			nn.MaxPool2d(kernel_size=3, stride=1),
 			nn.BatchNorm2d(8),
 			BinActivation(),
@@ -62,23 +62,28 @@ class BinSpecCNN(nn.Module):
 			nn.BatchNorm2d(16),
 			BinActivation(),
 
-			BinConv2d(16, 32, 4, stride=2),
+			BinConv2d(16, 32, 5, stride=1),
 			nn.MaxPool2d(kernel_size=3, stride=2),
 			nn.BatchNorm2d(32),
 			BinActivation(),
 
-			BinConv2d(32, 32, 4, stride=2),
-			nn.MaxPool2d(kernel_size=2, stride=2),
+			BinConv2d(32, 32, 5, stride=1),
+			nn.MaxPool2d(kernel_size=3, stride=2),
 			nn.BatchNorm2d(32),
 			BinActivation(),
 
-			BinConv2d(32, 32, 2, stride=1),
-			nn.MaxPool2d(kernel_size=2, stride=2),
+			BinConv2d(32, 32, 5, stride=1),
+			nn.MaxPool2d(kernel_size=3, stride=2),
 			nn.BatchNorm2d(32),
+			BinActivation(),
+
+			BinConv2d(32, 64, 3, stride=1),
+			nn.MaxPool2d(kernel_size=3, stride=2),
+			nn.BatchNorm2d(64),
 			BinActivation(),
 
 			Flatten(),
-			BinaryLinear(in_features=128, out_features=classCount)
+			BinaryLinear(in_features=256, out_features=classCount)
 		)
 
 	def forward(self, x):
