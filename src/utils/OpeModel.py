@@ -77,7 +77,7 @@ class OpeModel():
 		np.save('../tmp/%s,loss,%d,%d' % (mode, end, cnt), self.loss_list)
 
 	def load_state(self, mode, acc, end, cnt):
-		self.model = torch.load('../model/%s,%.2f,%d,%d.pt' % (mode, acc, end, cnt), map_location=torch.device('cpu'))
+		self.model = torch.load('../model/%s,%.2f,%d,%d.pt' % (mode, acc, end, cnt), map_location=self.device)
 		self.acc_list = np.load('../tmp/%s,acc,%d,%d.npy' % (mode, end, cnt)).tolist()
 		self.loss_list = np.load('../tmp/%s,loss,%d,%d.npy' % (mode, end, cnt)).tolist()
 

@@ -4,9 +4,15 @@ from torch.nn import functional as F
 
 
 def bin_act(x):
-	bin_wei = torch.sign(x).detach()
-	out = torch.tanh(x)
-	return bin_wei + out - out.detach()
+	bin_act = torch.sign(x).detach()
+	le_clip = x.lt(-1.0).type(torch.float32)
+	ri_clip = x.ge(1.0).type(torch.float32)
+	clip_l = torch.bitwise_and(x.ge(-1.0), x.lt(0.0))
+	clip_r = torch.bitwise_and(x.ge(0.0), x.lt(1.0))
+	cliped = clip_l * (2 + x) * x + clip_r * (2 - x) * x
+	out = cliped + ri_clip - le_clip
+# 	out = torch.tanh(x)
+	return bin_act + out - out.detach()
 
 
 class BinActivation(nn.Module):
@@ -52,6 +58,9 @@ class BinSpecCNN(nn.Module):
 	def __init__(self, classCount):
 		super(BinSpecCNN, self).__init__()
 		self.BinCnn = nn.Sequential(
+			nn.BatchNorm2d(1),
+			BinActivation(),
+
 			BinConv2d(3, 8, 11, stride=1),
 			nn.MaxPool2d(kernel_size=3, stride=1),
 			nn.BatchNorm2d(8),

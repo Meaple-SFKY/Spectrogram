@@ -8,14 +8,13 @@ import matplotlib.pyplot as plt
 from torch.optim import Adam
 from mpl_toolkits import mplot3d
 from prettytable import PrettyTable
-from scipy.interpolate import make_interp_spline
 
 import loss_landscapes
 import loss_landscapes.metrics
 
 
 def plot_confusion_matrix(cm, classes, cmap, normalize=False, title='Confusion matrix'):
-	cm_nor = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+	cm_nor = cm.astype('float') / cm.sum(axis=0)
 	table = PrettyTable()
 	table.field_names = ["", "ACC", "SEN", "SPE", "PPR"]
 	TP_SUM, FP_SUM, FN_SUM, TN_SUM = 0, 0, 0, 0
@@ -39,7 +38,7 @@ def plot_confusion_matrix(cm, classes, cmap, normalize=False, title='Confusion m
 	SPE_SUM = round(TN_SUM / (TN_SUM + FP_SUM), 3) if TN_SUM + FP_SUM != 0 else 0.
 	PPR_SUM = round(TP_SUM / (TP_SUM + FP_SUM), 3) if TP_SUM + FP_SUM != 0 else 0.
 	table.add_row(['SUM', ACC_SUM, SEN_SUM, SPE_SUM, PPR_SUM])
-	# print(table)
+	print(table)
 	plt.imshow(cm_nor, interpolation='nearest', cmap=cmap)
 	plt.title(title)
 	plt.colorbar(fraction=0.046, pad=0.05)
@@ -50,8 +49,8 @@ def plot_confusion_matrix(cm, classes, cmap, normalize=False, title='Confusion m
 	for i, j in itertools.product(range(cm_nor.shape[0]), range(cm_nor.shape[1])):
 		plt.text(j, i, format(cm_nor[i, j], '.2f'), horizontalalignment="center", color="white" if cm_nor[i, j] > thresh else "black")
 	plt.tight_layout()
-	plt.ylabel('True Labels', fontsize=14)
-	plt.xlabel('Predicted Labels', fontsize=14)
+	plt.ylabel('Predicted Labels', fontsize=13)
+	plt.xlabel('True Labels', fontsize=13)
 
 
 def confusion_matrix(preds, labels, conf_matrix):
@@ -61,29 +60,31 @@ def confusion_matrix(preds, labels, conf_matrix):
 	return conf_matrix
 
 
-def plot_cfm(model, test_loader, classes):
+def plot_cfm(model, device, test_loader, classes):
 	length = len(classes)
 	conf_matrix = torch.zeros(length, length)
 	acc_val = 0
 	model.eval()
-	total = 0
-	correct = 0
+	total, correct = 0, 0
 	for data in test_loader:
-		images, labels = data
-		total += len(labels)
-		out = model(images)
-		prediction = torch.max(out, 1)[1]
+		inputs, target = data
+		inputs = inputs.to(device)
+		target = target.to(device)
+		total += len(target)
+		outputs = model(inputs)
+		prediction = torch.max(outputs.data, 1)[1]
 		conf_matrix = confusion_matrix(
-			prediction, labels=labels, conf_matrix=conf_matrix)
-		correct += (prediction == labels).sum().item()
-	acc_val = 100 * correct / total
+			prediction, labels=target, conf_matrix=conf_matrix)
+		correct += (prediction == target).sum().cpu().item()
+	acc_val = (100 * correct) / total
 
 	attack_types = classes
 	plt.tight_layout()
 	plt.figure(figsize=(9, 8.5))
+	plt.rcParams['font.sans-serif'] = ['Times New Roman']
 	plot_confusion_matrix(
 		conf_matrix.numpy(), classes=attack_types, cmap=plt.cm.Blues, normalize=True)
-	plt.title('Normalized confusion matrix, with acc=%.2f' % (acc_val), fontsize=14)
+	plt.title('Normalized confusion matrix, with OA=%.2f' % (acc_val), fontsize=13)
 	plt.savefig(fname="../data/Confusion-matrix.pdf", format="pdf", bbox_inches='tight')
 
 
@@ -121,9 +122,7 @@ class Landscape():
 	def draw(self):
 		if self.mode == 1:
 			x = np.linspace(0, 1, self.step)
-			x_smooth = np.linspace(x.min(), x.max(), 1000)
-			y_smooth = make_interp_spline(x, self.loss_data_1d)(x_smooth)
-			plt.plot(x_smooth, y_smooth)
+			plt.plot(x, self.loss_data_1d)
 			plt.xlabel('Interpolation Coefficient')
 			plt.ylabel('Loss')
 			axes = plt.gca()
