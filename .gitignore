@@ -1,6 +1,6 @@
 image
 docs
-model
-HelloWorld
+# model
+Pods
 .DS_Store
 __pycache__
